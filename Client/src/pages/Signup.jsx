@@ -23,7 +23,7 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex text-left">
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#F06C28] p-12 flex-col justify-between relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -70,7 +70,7 @@ export default function Signup() {
                 required
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -83,7 +83,7 @@ export default function Signup() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -94,7 +94,7 @@ export default function Signup() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -107,13 +107,13 @@ export default function Signup() {
                 required
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg"
             >
               Create Account
             </button>
@@ -121,7 +121,7 @@ export default function Signup() {
 
           <p className="mt-8 text-center text-gray-600">
             Already have an account?{' '}
-            <Link to="/" className="text-primary font-bold hover:text-primary-dark">
+            <Link to="/" className="text-primary font-bold">
               Sign in
             </Link>
           </p>

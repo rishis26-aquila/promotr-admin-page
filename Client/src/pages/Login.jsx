@@ -15,7 +15,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex text-left">
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#F06C28] p-12 flex-col justify-between relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -61,7 +61,7 @@ export default function Login() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -72,7 +72,7 @@ export default function Login() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -81,17 +81,14 @@ export default function Login() {
                 <input type="checkbox" className="mr-2 w-4 h-4 text-primary rounded" />
                 <span className="text-sm text-gray-600">Remember me</span>
               </label>
-              <a
-                href="/forgot-password"
-                className="text-sm text-primary hover:text-primary-dark font-semibold"
-              >
+              <a href="/forgot-password" className="text-sm text-primary font-semibold">
                 Forgot password?
               </a>
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg"
             >
               Sign In
             </button>
@@ -99,7 +96,7 @@ export default function Login() {
 
           <p className="mt-8 text-center text-gray-600">
             Don't have an account?{' '}
-            <Link to="/auth/signup" className="text-primary font-bold hover:text-primary-dark">
+            <Link to="/auth/signup" className="text-primary font-bold">
               Sign up
             </Link>
           </p>

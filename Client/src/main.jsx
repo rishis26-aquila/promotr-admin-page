@@ -10,6 +10,7 @@ import Jobs from './pages/Jobs.jsx'
 import Finance from './pages/Finance.jsx'
 import Admin from './pages/Admin.jsx'
 import NotFound from './pages/NotFound.jsx'
+import Layout from './components/Layout.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -17,12 +18,56 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/auth/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/people" element={<People />} />
-        <Route path="/jobs" element={<Jobs />} />
-        <Route path="/finance" element={<Finance />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="*" element={<NotFound />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
+        <Route
+          path="/people"
+          element={
+            <Layout>
+              <People />
+            </Layout>
+          }
+        />
+        <Route
+          path="/jobs"
+          element={
+            <Layout>
+              <Jobs />
+            </Layout>
+          }
+        />
+        <Route
+          path="/finance"
+          element={
+            <Layout>
+              <Finance />
+            </Layout>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <Layout>
+              <Admin />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Layout>
+              <NotFound />
+            </Layout>
+          }
+        />
       </Routes>
     </BrowserRouter>
   </StrictMode>

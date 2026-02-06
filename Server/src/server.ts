@@ -61,17 +61,31 @@ function parseCSV(filePath: string): any[] {
 }
 
 // Load data from CSV
-// Use process.cwd() to consistently find the file relative to project root
-const csvPath = path.join(process.cwd(), "Server", "dummydata.csv");
+const csvPath = path.join(__dirname, "..", "dummydata.csv");
 let allData: any[] = [];
 
 // Initialize data
-try {
-  allData = parseCSV(csvPath);
-  console.log(`✅ Loaded ${allData.length} records from CSV`);
-} catch (error) {
-  console.error("❌ Error loading CSV:", error);
+function loadData() {
+  try {
+    if (fs.existsSync(csvPath)) {
+      allData = parseCSV(csvPath);
+      console.log(`✅ Loaded ${allData.length} records from CSV at ${csvPath}`);
+    } else {
+      // Fallback to cwd if run from root
+      const fallbackPath = path.join(process.cwd(), "Server", "dummydata.csv");
+      if (fs.existsSync(fallbackPath)) {
+        allData = parseCSV(fallbackPath);
+        console.log(`✅ Loaded ${allData.length} records from CSV at fallback path ${fallbackPath}`);
+      } else {
+        console.error(`❌ CSV file not found at ${csvPath} or ${fallbackPath}`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error loading CSV:", error);
+  }
 }
+
+loadData();
 
 // API Routes
 
