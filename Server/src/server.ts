@@ -29,20 +29,20 @@ function parseCSV(filePath: string): any[] {
   try {
     const csvData = fs.readFileSync(filePath, "utf-8");
     const lines = csvData.trim().split("\n");
-    
+
     if (lines.length === 0) {
       console.warn("CSV file is empty");
       return [];
     }
-    
+
     const headerLine = lines[0];
     if (!headerLine) {
       console.warn("CSV file has no header line");
       return [];
     }
-    
+
     const headers = headerLine.split(",");
-    
+
     const data = lines.slice(1).map((line) => {
       const values = line.split(",");
       const obj: any = {};
@@ -52,7 +52,7 @@ function parseCSV(filePath: string): any[] {
       });
       return obj;
     });
-    
+
     return data;
   } catch (error) {
     console.error("Error reading CSV:", error);
@@ -61,7 +61,8 @@ function parseCSV(filePath: string): any[] {
 }
 
 // Load data from CSV
-const csvPath = path.join(__dirname, "../dummydata.csv");
+// Use process.cwd() to consistently find the file relative to project root
+const csvPath = path.join(process.cwd(), "Server", "dummydata.csv");
 let allData: any[] = [];
 
 // Initialize data
@@ -102,9 +103,9 @@ app.get("/api/health", (req: Request, res: Response) => {
 // Get all users
 app.get("/api/users", (req: Request, res: Response) => {
   const { role, status, kycStatus } = req.query;
-  
+
   let users = allData.filter((item) => item.userId);
-  
+
   if (role) {
     users = users.filter((u) => u.role === role);
   }
@@ -114,7 +115,7 @@ app.get("/api/users", (req: Request, res: Response) => {
   if (kycStatus) {
     users = users.filter((u) => u.kycStatus === kycStatus);
   }
-  
+
   res.json({
     success: true,
     count: users.length,
@@ -125,14 +126,14 @@ app.get("/api/users", (req: Request, res: Response) => {
 // Get user by ID
 app.get("/api/users/:id", (req: Request, res: Response) => {
   const user = allData.find((item) => item.userId === req.params.id);
-  
+
   if (!user) {
     return res.status(404).json({
       success: false,
       message: "User not found",
     });
   }
-  
+
   res.json({
     success: true,
     data: user,
@@ -142,16 +143,16 @@ app.get("/api/users/:id", (req: Request, res: Response) => {
 // Get all jobs
 app.get("/api/jobs", (req: Request, res: Response) => {
   const { status, category } = req.query;
-  
+
   let jobs = allData.filter((item) => item.jobId);
-  
+
   if (status) {
     jobs = jobs.filter((j) => j.jobStatus === status);
   }
   if (category) {
     jobs = jobs.filter((j) => j.jobCategory === category);
   }
-  
+
   res.json({
     success: true,
     count: jobs.length,
@@ -162,14 +163,14 @@ app.get("/api/jobs", (req: Request, res: Response) => {
 // Get job by ID
 app.get("/api/jobs/:id", (req: Request, res: Response) => {
   const job = allData.find((item) => item.jobId === req.params.id);
-  
+
   if (!job) {
     return res.status(404).json({
       success: false,
       message: "Job not found",
     });
   }
-  
+
   res.json({
     success: true,
     data: job,
@@ -182,21 +183,21 @@ app.get("/api/dashboard", (req: Request, res: Response) => {
   const workers = users.filter((u) => u.role === "worker");
   const businesses = users.filter((u) => u.role === "business");
   const jobs = allData.filter((item) => item.jobId);
-  
+
   const activeUsers = users.filter((u) => u.status === "active").length;
   const totalRevenue = jobs
     .filter((j) => j.paymentStatus === "paid")
     .reduce((sum, j) => sum + parseFloat(j.jobAmount || 0), 0);
-  
+
   const totalCommission = jobs
     .filter((j) => j.paymentStatus === "paid")
     .reduce((sum, j) => sum + parseFloat(j.commission || 0), 0);
-  
+
   const pendingKYC = users.filter((u) => u.kycStatus === "pending").length;
   const completedJobs = jobs.filter((j) => j.jobStatus === "completed").length;
   const activeJobs = jobs.filter((j) => j.jobStatus === "in_progress").length;
   const pendingJobs = jobs.filter((j) => j.jobStatus === "pending").length;
-  
+
   res.json({
     success: true,
     data: {
@@ -235,7 +236,7 @@ app.get("/api/dashboard", (req: Request, res: Response) => {
 // Analytics Data
 app.get("/api/analytics", (req: Request, res: Response) => {
   const jobs = allData.filter((item) => item.jobId);
-  
+
   // Revenue by category
   const revenueByCategory: any = {};
   jobs.forEach((job) => {
@@ -247,14 +248,14 @@ app.get("/api/analytics", (req: Request, res: Response) => {
       revenueByCategory[category] += parseFloat(job.jobAmount || 0);
     }
   });
-  
+
   // Jobs by city
   const jobsByCity: any = {};
   jobs.forEach((job) => {
     const city = job.city || "Unknown";
     jobsByCity[city] = (jobsByCity[city] || 0) + 1;
   });
-  
+
   res.json({
     success: true,
     data: {
@@ -270,9 +271,9 @@ app.get("/api/analytics", (req: Request, res: Response) => {
 // KYC Pending Users
 app.get("/api/kyc/pending", (req: Request, res: Response) => {
   const pendingKYC = allData.filter(
-    (item) => item.userId && item.kycStatus === "pending"
+    (item) => item.userId && item.kycStatus === "pending",
   );
-  
+
   res.json({
     success: true,
     count: pendingKYC.length,
