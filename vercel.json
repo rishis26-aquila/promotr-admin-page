@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "buildCommand": "cd Client && npm install && npm run build",
+  "outputDirectory": "Client/dist",
+  "installCommand": "npm install --prefix Client && npm install --prefix Server",
+  "functions": {
+    "Server/src/server.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/Server/src/server.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/Client/dist/$1"
+    }
+  ]
+}
+
