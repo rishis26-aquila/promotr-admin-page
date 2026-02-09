@@ -6,6 +6,34 @@ const People = () => {
   const [activeTab, setActiveTab] = useState('directory')
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [editingUser, setEditingUser] = useState(null)
+  const [formData, setFormData] = useState({})
+
+  const handleEditClick = (user) => {
+    setEditingUser(user)
+    setFormData(user)
+  }
+
+  const handleCloseModal = () => {
+    setEditingUser(null)
+    setFormData({})
+  }
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    try {
+      await api.updateUser(editingUser.userId, formData)
+      setUsers(users.map((u) => (u.userId === editingUser.userId ? formData : u)))
+      handleCloseModal()
+    } catch (error) {
+      console.error('Failed to update user', error)
+      alert('Failed to update user')
+    }
+  }
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -83,7 +111,12 @@ const People = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right space-x-4">
-                  <button className="text-primary font-bold text-sm hover:underline">Edit</button>
+                  <button
+                    onClick={() => handleEditClick(user)}
+                    className="text-primary font-bold text-sm hover:underline"
+                  >
+                    Edit
+                  </button>
                   <button className="text-red-500 font-bold text-sm hover:underline">Ban</button>
                 </td>
               </tr>
@@ -218,6 +251,89 @@ const People = () => {
       {activeTab === 'directory' && renderDirectory()}
       {activeTab === 'kyc' && renderKYC()}
       {activeTab === 'fraud' && renderFraud()}
+
+      {editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-lg">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Edit User</h2>
+            <form onSubmit={handleSave}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Name</label>
+                  <input
+                    type="text"
+                    name="userName"
+                    value={formData.userName || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Role</label>
+                  <select
+                    name="role"
+                    value={formData.role || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="worker">Worker</option>
+                    <option value="business">Business</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Status</label>
+                  <select
+                    name="status"
+                    value={formData.status || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="banned">Banned</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow-md hover:bg-primary/90"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

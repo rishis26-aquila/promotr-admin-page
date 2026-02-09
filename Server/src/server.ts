@@ -24,6 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Global headers
+let csvHeaders: string[] = [];
+
 // CSV Parser Function
 function parseCSV(filePath: string): any[] {
   try {
@@ -42,6 +45,7 @@ function parseCSV(filePath: string): any[] {
     }
 
     const headers = headerLine.split(",");
+    csvHeaders = headers; // Store headers for writing
 
     const data = lines.slice(1).map((line) => {
       const values = line.split(",");
@@ -60,6 +64,48 @@ function parseCSV(filePath: string): any[] {
   }
 }
 
+// Save data to CSV
+function saveData() {
+  try {
+    if (csvHeaders.length === 0) {
+      console.error("❌ Cannot save CSV: Headers not loaded");
+      return;
+    }
+
+    const headerLine = csvHeaders.join(",");
+
+    const lines = allData.map((obj) => {
+      return csvHeaders
+        .map((header) => {
+          const key = header.trim();
+          return obj[key] !== undefined && obj[key] !== null ? obj[key] : "";
+        })
+        .join(",");
+    });
+
+    const csvContent = [headerLine, ...lines].join("\n");
+
+    // Try primary path then fallback
+    try {
+      if (fs.existsSync(csvPath)) {
+        fs.writeFileSync(csvPath, csvContent, "utf-8");
+      } else {
+        const fallbackPath = path.join(
+          process.cwd(),
+          "Server",
+          "dummydata.csv",
+        );
+        fs.writeFileSync(fallbackPath, csvContent, "utf-8");
+      }
+      console.log(`✅ Saved ${allData.length} records to CSV`);
+    } catch (err) {
+      console.error("❌ Error writing to CSV file:", err);
+    }
+  } catch (error) {
+    console.error("❌ Error stringifying CSV:", error);
+  }
+}
+
 // Load data from CSV
 const csvPath = path.join(__dirname, "..", "dummydata.csv");
 let allData: any[] = [];
@@ -75,7 +121,9 @@ function loadData() {
       const fallbackPath = path.join(process.cwd(), "Server", "dummydata.csv");
       if (fs.existsSync(fallbackPath)) {
         allData = parseCSV(fallbackPath);
-        console.log(`✅ Loaded ${allData.length} records from CSV at fallback path ${fallbackPath}`);
+        console.log(
+          `✅ Loaded ${allData.length} records from CSV at fallback path ${fallbackPath}`,
+        );
       } else {
         console.error(`❌ CSV file not found at ${csvPath} or ${fallbackPath}`);
       }
@@ -151,6 +199,33 @@ app.get("/api/users/:id", (req: Request, res: Response) => {
   res.json({
     success: true,
     data: user,
+  });
+});
+
+// Update user
+app.put("/api/users/:id", (req: Request, res: Response) => {
+  const userId = req.params.id;
+  const updates = req.body;
+
+  const userIndex = allData.findIndex((item) => item.userId === userId);
+
+  if (userIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+
+  // Update fields
+  allData[userIndex] = { ...allData[userIndex], ...updates };
+
+  // Save to CSV
+  saveData();
+
+  res.json({
+    success: true,
+    data: allData[userIndex],
+    message: "User updated successfully",
   });
 });
 
