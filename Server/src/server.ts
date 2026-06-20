@@ -26,9 +26,13 @@ const resend = new Resend(process.env.RESEND_API_KEY || "");
 function getJwtSecret(): string {
   if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
   if (fs.existsSync(path.join(__dirname, "..", "jwt_secret.txt"))) {
-    return fs.readFileSync(path.join(__dirname, "..", "jwt_secret.txt"), "utf-8").trim();
+    return fs
+      .readFileSync(path.join(__dirname, "..", "jwt_secret.txt"), "utf-8")
+      .trim();
   }
-  console.warn("⚠️ Generating ephemeral JWT secret. Sessions will not persist across restarts!");
+  console.warn(
+    "⚠️ Generating ephemeral JWT secret. Sessions will not persist across restarts!",
+  );
   return crypto.randomBytes(32).toString("hex");
 }
 const JWT_SECRET = getJwtSecret();
@@ -89,14 +93,19 @@ interface AuthRequest extends Request {
 }
 
 function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
-  const token = req.cookies?.__Host_promotr_session || req.cookies?.promotr_session;
+  const token =
+    req.cookies?.["__Host-promotr_session"] || req.cookies?.promotr_session;
 
   if (!token) {
-    return res.status(401).json({ success: false, message: "Not authenticated" });
+    return res
+      .status(401)
+      .json({ success: false, message: "Not authenticated" });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }) as {
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      algorithms: ["HS256"],
+    }) as {
       id: string;
       email: string;
       name: string;
@@ -105,7 +114,9 @@ function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ success: false, message: "Invalid or expired session" });
+    return res
+      .status(401)
+      .json({ success: false, message: "Invalid or expired session" });
   }
 }
 
@@ -274,7 +285,7 @@ app.post("/api/auth/send-otp", async (req: Request, res: Response) => {
       html: `
         <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #F06C28;">Promotr Admin</h2>
-          <p>Login verification code for <b>${user.firstName || "Admin"}</b>:</p>
+          <p>Login verification code for <b>${user.userName?.split("_")[0] || "Admin"}</b>:</p>
           <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #F06C28; background: #FFF5F0; padding: 15px; text-align: center; border-radius: 8px;">
             ${otp}
           </div>
@@ -311,21 +322,26 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
   const otpToken = req.cookies?.promotr_otp_pending;
 
   if (!otpToken) {
-    return res
-      .status(400)
-      .json({ success: false, message: "OTP expired or not requested. Please request a new code." });
+    return res.status(400).json({
+      success: false,
+      message: "OTP expired or not requested. Please request a new code.",
+    });
   }
 
   try {
     // Verify and decode the OTP token
-    const decoded = jwt.verify(otpToken, JWT_SECRET, { algorithms: ["HS256"] }) as {
+    const decoded = jwt.verify(otpToken, JWT_SECRET, {
+      algorithms: ["HS256"],
+    }) as {
       email: string;
       otpHash: string;
     };
 
     // Ensure the email matches
     if (decoded.email !== normalizedEmail) {
-      return res.status(400).json({ success: false, message: "Email mismatch" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email mismatch" });
     }
 
     // Compare OTP hashes
@@ -350,7 +366,7 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
     const payload = {
       id: user.userId,
       email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
+      name: user.userName?.split("_")[0] || "Admin",
       role: user.role,
     };
 
@@ -361,7 +377,9 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
     });
 
     // Set secure HttpOnly session cookie
-    const cookieName = isProduction ? "__Host-promotr_session" : "promotr_session";
+    const cookieName = isProduction
+      ? "__Host-promotr_session"
+      : "promotr_session";
 
     res.cookie(cookieName, token, {
       httpOnly: true,
@@ -380,9 +398,14 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
     });
   } catch (err: any) {
     if (err.name === "TokenExpiredError") {
-      return res.status(400).json({ success: false, message: "OTP expired. Please request a new code." });
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired. Please request a new code.",
+      });
     }
-    return res.status(400).json({ success: false, message: "Invalid OTP verification" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid OTP verification" });
   }
 });
 
@@ -394,7 +417,9 @@ app.get("/api/auth/me", authenticate, (req: AuthRequest, res: Response) => {
 // Logout - clear the session cookie
 app.post("/api/auth/logout", (req: Request, res: Response) => {
   const isProduction = process.env.NODE_ENV === "production";
-  const cookieName = isProduction ? "__Host-promotr_session" : "promotr_session";
+  const cookieName = isProduction
+    ? "__Host-promotr_session"
+    : "promotr_session";
 
   res.clearCookie(cookieName, {
     httpOnly: true,
@@ -427,14 +452,13 @@ app.post("/api/auth/signup", (req: Request, res: Response) => {
 
   const newUser = {
     userId: `USR${Date.now()}`,
-    firstName,
-    lastName: lastName || "",
+    userName: `${firstName} ${lastName || ""}`.trim(),
     email: email.toLowerCase(),
     role: role || "Manager",
     status: "Active",
     kycStatus: "Pending",
-    mobile: "",
-    registeredDate: new Date().toISOString().split("T")[0],
+    phone: "",
+    joinDate: new Date().toISOString().split("T")[0],
   };
 
   allData.push(newUser);
