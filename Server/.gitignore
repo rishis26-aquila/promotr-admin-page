@@ -146,3 +146,4 @@ public/uploads/
 *.tmp
 *.temp
 bun.lockb
+/src/generated/prisma
