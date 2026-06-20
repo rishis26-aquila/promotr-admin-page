@@ -76,12 +76,10 @@ app.post(
     );
     if (!user) {
       // Hide internal details, return generic response to prevent email enumeration (though currently it says Unauthorized)
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "This email is not registered in our system.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "This email is not registered in our system.",
+      });
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();

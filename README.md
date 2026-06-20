@@ -58,6 +58,7 @@ The admin panel is built with a focus on:
 ### 🛡️ Enterprise Security (Implemented)
 
 **Production-Grade Protections**
+
 - **Strict Validation:** Comprehensive Zod schema validation across all request payloads, queries, and parameters.
 - **Role-Based Access Control (RBAC):** Programmatic role enforcement matrix (`Super Admin`, `Manager`) across all mutation endpoints.
 - **Stateless Authentication:** Highly secure `HttpOnly`, `Secure`, and `SameSite=Strict` JWT session management. OTPs are cryptographically hashed and enforce strict 5-minute expirations.
