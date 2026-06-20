@@ -14,8 +14,13 @@ const __dirname = path.dirname(__filename);
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
-const resend = new Resend(process.env.RESEND_API_KEY || "re_Xzm3vVVy_31KU3rsrPDBN8mYBykZ18wjW");
-// TODO(security): Move the Resend API key to env var and remove the hardcoded fallback in production.
+if (!process.env.RESEND_API_KEY) {
+  console.error("❌ FATAL: RESEND_API_KEY environment variable is not set!");
+  if (process.env.NODE_ENV === "production") {
+    process.exit(1);
+  }
+}
+const resend = new Resend(process.env.RESEND_API_KEY || "");
 
 // JWT Secret - secure multi-tiered fallback
 function getJwtSecret(): string {
@@ -36,11 +41,14 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3000",
 ];
 
-// In-memory OTP storage (Email -> {code, expires})
-const otps = new Map<string, { code: string; expires: number }>();
-
+// Crypto-secure OTP generation
 function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 999999).toString();
+}
+
+// Hash OTP for safe storage in cookies
+function hashOTP(otp: string): string {
+  return crypto.createHash("sha256").update(otp).digest("hex");
 }
 
 // Middleware
@@ -250,11 +258,13 @@ app.post("/api/auth/send-otp", async (req: Request, res: Response) => {
   }
 
   const otp = generateOTP();
-  // Store OTP with 5 minute expiry
-  otps.set(email.toLowerCase(), {
-    code: otp,
-    expires: Date.now() + 5 * 60 * 1000,
-  });
+
+  // Create a signed JWT containing the OTP hash (stateless — works on serverless)
+  const otpToken = jwt.sign(
+    { email: email.toLowerCase(), otpHash: hashOTP(otp) },
+    JWT_SECRET,
+    { algorithm: "HS256", expiresIn: "5m" },
+  );
 
   try {
     await resend.emails.send({
@@ -275,7 +285,17 @@ app.post("/api/auth/send-otp", async (req: Request, res: Response) => {
       `,
     });
 
-    console.log(`✅ OTP ${otp} sent to ${email}`);
+    // Set OTP verification cookie (stateless — no in-memory storage needed)
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("promotr_otp_pending", otpToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 5 * 60 * 1000, // 5 minutes
+      path: "/",
+    });
+
+    console.log(`✅ OTP sent to ${email}`);
     res.json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
     console.error("❌ Resend error:", error);
@@ -286,21 +306,41 @@ app.post("/api/auth/send-otp", async (req: Request, res: Response) => {
 app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
   const { email, otp } = req.body;
   const normalizedEmail = email?.toLowerCase();
-  const stored = otps.get(normalizedEmail);
 
-  if (!stored) {
+  // Read the OTP verification token from the cookie
+  const otpToken = req.cookies?.promotr_otp_pending;
+
+  if (!otpToken) {
     return res
       .status(400)
-      .json({ success: false, message: "OTP expired or not requested" });
+      .json({ success: false, message: "OTP expired or not requested. Please request a new code." });
   }
 
-  if (Date.now() > stored.expires) {
-    otps.delete(normalizedEmail);
-    return res.status(400).json({ success: false, message: "OTP expired" });
-  }
+  try {
+    // Verify and decode the OTP token
+    const decoded = jwt.verify(otpToken, JWT_SECRET, { algorithms: ["HS256"] }) as {
+      email: string;
+      otpHash: string;
+    };
 
-  if (stored.code === otp) {
-    otps.delete(normalizedEmail);
+    // Ensure the email matches
+    if (decoded.email !== normalizedEmail) {
+      return res.status(400).json({ success: false, message: "Email mismatch" });
+    }
+
+    // Compare OTP hashes
+    if (decoded.otpHash !== hashOTP(otp)) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
+    }
+
+    // OTP is valid — clear the pending OTP cookie
+    const isProduction = process.env.NODE_ENV === "production";
+    res.clearCookie("promotr_otp_pending", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
 
     // Find user to return details
     const user = allData.find(
@@ -314,14 +354,13 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
       role: user.role,
     };
 
-    // Generate JWT
+    // Generate session JWT
     const token = jwt.sign(payload, JWT_SECRET, {
       algorithm: "HS256",
       expiresIn: JWT_EXPIRY,
     });
 
-    // Set secure HttpOnly cookie
-    const isProduction = process.env.NODE_ENV === "production";
+    // Set secure HttpOnly session cookie
     const cookieName = isProduction ? "__Host-promotr_session" : "promotr_session";
 
     res.cookie(cookieName, token, {
@@ -330,7 +369,6 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
       sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
-      ...(isProduction ? {} : {}),
     });
 
     console.log(`✅ Session created for ${user.email}`);
@@ -340,8 +378,11 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
       message: "Login successful",
       user: payload,
     });
-  } else {
-    res.status(400).json({ success: false, message: "Invalid OTP" });
+  } catch (err: any) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(400).json({ success: false, message: "OTP expired. Please request a new code." });
+    }
+    return res.status(400).json({ success: false, message: "Invalid OTP verification" });
   }
 });
 
