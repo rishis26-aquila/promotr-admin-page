@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import api from '../services/api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -17,14 +18,8 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email }),
-      })
+      const data = await api.sendOtp(email)
 
-      const data = await response.json()
       if (data.success) {
         setOtpSent(true)
       } else {
@@ -43,14 +38,8 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, otp }),
-      })
+      const data = await api.verifyOtp(email, otp)
 
-      const data = await response.json()
       if (data.success) {
         login(data.user)
         navigate('/dashboard')
