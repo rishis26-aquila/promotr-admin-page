@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import api from '../services/api'
 
 export default function Signup() {
   const navigate = useNavigate()
@@ -19,14 +20,8 @@ export default function Signup() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      })
+      const data = await api.signup(formData)
 
-      const data = await response.json()
       if (data.success) {
         setSuccess(true)
         setTimeout(() => navigate('/'), 2500)
