@@ -3,23 +3,63 @@ import { Link, useNavigate } from 'react-router-dom'
 
 export default function Signup() {
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
-    password: '',
-    confirmPassword: '',
+    role: 'Manager',
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    setLoading(true)
 
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!')
-      return
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setSuccess(true)
+        setTimeout(() => navigate('/'), 2500)
+      } else {
+        setError(data.message || 'Signup failed')
+      }
+    } catch (err) {
+      setError('Connection error. Is the server running?')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    // Simulate successful signup and redirect to dashboard
-    navigate('/dashboard')
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col space-y-4">
+        <div className="bg-white p-12 rounded-3xl shadow-2xl text-center max-w-sm">
+          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 mb-2">Welcome!</h2>
+          <p className="text-gray-500 font-medium">
+            Your account is ready. Redirecting to login...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -31,100 +71,121 @@ export default function Signup() {
         </div>
 
         <div className="relative z-10">
-          <a href="/" className="inline-block">
-            <img
-              src="/logo.svg"
-              alt="Promotr"
-              className="h-16 w-auto bg-white px-4 py-2 rounded-lg"
-            />
-          </a>
-          <p className="text-white/90 text-lg font-semibold mt-4">Promote. Engage. Grow.</p>
-        </div>
-
-        <div className="relative z-10">
-          <h1 className="text-5xl font-bold text-white mb-6">Join Promotr admin panel</h1>
-          <p className="text-xl text-white/90">
-            Create admin account to login and manage your data.
+          <Link to="/" className="inline-block">
+            <div className="bg-white p-3 rounded-xl shadow-lg inline-flex">
+              <img src="/logo.svg" alt="Promotr" className="h-10 w-auto" />
+            </div>
+          </Link>
+          <p className="text-white/95 text-xl font-bold mt-6 tracking-tight">
+            Promote. Engage. Grow.
           </p>
         </div>
 
-        <div className="relative z-10 text-white/60 text-sm">
-          © 2026 Promotr. All rights reserved.
+        <div className="relative z-10">
+          <h1 className="text-6xl font-black text-white mb-6 leading-tight">
+            Join the <br />
+            <span className="text-white/80 font-medium text-4xl">Admin Workforce</span>
+          </h1>
+          <p className="text-xl text-white/80 max-w-md">
+            Register your corporate profile for secure dashboard access.
+          </p>
+        </div>
+
+        <div className="relative z-10 text-white/60 text-sm font-medium">
+          © 2026 Promotr. Access restricted to authorized personnel.
         </div>
       </div>
 
       {/* Right Side - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white lg:bg-gray-50">
         <div className="w-full max-w-md">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
-            <p className="text-gray-600">Sign up to get started with Promotr</p>
+          <div className="mb-10 text-center lg:text-left">
+            <h2 className="text-4xl font-black text-gray-900 mb-3 tracking-tight">
+              Create Account
+            </h2>
+            <p className="text-gray-500 font-medium">Register for passwordless Admin access</p>
           </div>
 
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm font-bold rounded-r-xl">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-              <input
-                type="text"
-                required
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  className="w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-primary transition-all text-gray-900 font-medium"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  className="w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-primary transition-all text-gray-900 font-medium"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                Corporate Email
               </label>
               <input
                 type="email"
                 required
+                placeholder="rishi@aquilaevents.in"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
+                className="w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-primary transition-all text-gray-900 font-medium"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirm Password
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                Assigned Role
               </label>
-              <input
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
-              />
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-primary transition-all text-gray-900 font-medium appearance-none"
+              >
+                <option value="Manager">Manager</option>
+                <option value="Super Admin">Super Admin</option>
+                <option value="Editor">Editor</option>
+              </select>
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg"
+              disabled={loading}
+              className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
             >
-              Create Account
+              {loading ? 'Creating Profile...' : 'Complete Registration'}
             </button>
           </form>
 
-          <p className="mt-8 text-center text-gray-600">
-            Already have an account?{' '}
-            <Link to="/" className="text-primary font-bold">
-              Sign in
-            </Link>
-          </p>
+          <div className="mt-10 pt-10 border-t border-gray-100 text-center lg:text-left">
+            <p className="text-gray-500 font-medium">
+              Already have permission?{' '}
+              <Link to="/" className="text-primary font-black hover:underline ml-1">
+                Sign In
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -4,14 +4,14 @@
     // File Layout
     "target": "ES2020",
     "module": "ESNext",
+    "moduleResolution": "bundler",
     "rootDir": "./src",
     "outDir": "./dist",
     "esModuleInterop": true,
 
-
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    
+
     "types": ["node"],
     "lib": ["ESNext"],
 
@@ -39,6 +39,6 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   }
 }

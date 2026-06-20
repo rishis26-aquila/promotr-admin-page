@@ -3,6 +3,7 @@ import type { Express, Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Resend } from "resend";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,8 +11,23 @@ const __dirname = path.dirname(__filename);
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
+const resend = new Resend("re_Xzm3vVVy_31KU3rsrPDBN8mYBykZ18wjW");
+
+// In-memory OTP storage (Email -> {code, expires})
+const otps = new Map<string, { code: string; expires: number }>();
+
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 // Middleware
 app.use(express.json());
+
+// Log all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 // CORS Configuration for Vercel deployment
 app.use((req, res, next) => {
@@ -150,6 +166,140 @@ app.get("/", (req: Request, res: Response) => {
       dashboard: "/api/dashboard",
       analytics: "/api/analytics",
     },
+  });
+});
+
+// Auth Routes
+app.post("/api/auth/send-otp", async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  // 🛡️ SECURITY: Only allow authorized emails from our CSV
+  const user = allData.find(
+    (u) => u.email?.toLowerCase() === email.toLowerCase(),
+  );
+
+  if (!user) {
+    console.log(`⚠️ Blocked OTP attempt for unauthorized email: ${email}`);
+    return res.status(403).json({
+      success: false,
+      error: "Unauthorized",
+      message: "This email is not registered in our system.",
+    });
+  }
+
+  const otp = generateOTP();
+  // Store OTP with 5 minute expiry
+  otps.set(email.toLowerCase(), {
+    code: otp,
+    expires: Date.now() + 5 * 60 * 1000,
+  });
+
+  try {
+    await resend.emails.send({
+      from: "Promotr Admin <onboarding@resend.dev>",
+      to: email,
+      subject: `Your Admin Verification Code: ${otp}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #F06C28;">Promotr Admin</h2>
+          <p>Login verification code for <b>${user.firstName || "Admin"}</b>:</p>
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #F06C28; background: #FFF5F0; padding: 15px; text-align: center; border-radius: 8px;">
+            ${otp}
+          </div>
+          <p style="color: #666; font-size: 13px; margin-top: 20px;">
+            This code will expire in 5 minutes. If you didn't request this, please ignore this email.
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`✅ OTP ${otp} sent to ${email}`);
+    res.json({ success: true, message: "OTP sent successfully" });
+  } catch (error) {
+    console.error("❌ Resend error:", error);
+    res.status(500).json({ error: "Failed to send email" });
+  }
+});
+
+app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+  const normalizedEmail = email?.toLowerCase();
+  const stored = otps.get(normalizedEmail);
+
+  if (!stored) {
+    return res
+      .status(400)
+      .json({ success: false, message: "OTP expired or not requested" });
+  }
+
+  if (Date.now() > stored.expires) {
+    otps.delete(normalizedEmail);
+    return res.status(400).json({ success: false, message: "OTP expired" });
+  }
+
+  if (stored.code === otp) {
+    otps.delete(normalizedEmail);
+
+    // Find unauthorized user again to return details
+    const user = allData.find(
+      (u) => u.email?.toLowerCase() === normalizedEmail,
+    );
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      user: {
+        id: user.userId,
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+        role: user.role,
+      },
+    });
+  } else {
+    res.status(400).json({ success: false, message: "Invalid OTP" });
+  }
+});
+
+app.post("/api/auth/signup", (req: Request, res: Response) => {
+  const { firstName, lastName, email, role } = req.body;
+
+  if (!firstName || !email) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
+  }
+
+  const existingUser = allData.find(
+    (u) => u.email?.toLowerCase() === email.toLowerCase(),
+  );
+  if (existingUser) {
+    return res.status(400).json({
+      success: false,
+      message: "Account already exists with this email",
+    });
+  }
+
+  const newUser = {
+    userId: `USR${Date.now()}`,
+    firstName,
+    lastName: lastName || "",
+    email: email.toLowerCase(),
+    role: role || "Manager",
+    status: "Active",
+    kycStatus: "Pending",
+    mobile: "",
+    registeredDate: new Date().toISOString().split("T")[0],
+  };
+
+  allData.push(newUser);
+  saveData();
+
+  console.log(`🆕 New Admin Registered: ${email}`);
+  res.json({
+    success: true,
+    message: "Account created successfully. You can now login.",
+    user: newUser,
   });
 });
 
@@ -372,8 +522,8 @@ app.get("/api/kyc/pending", (req: Request, res: Response) => {
 
 // Start server
 if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  app.listen(Number(PORT), "0.0.0.0", () => {
+    console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
     console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
   });
 }
