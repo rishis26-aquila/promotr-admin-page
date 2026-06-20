@@ -19,8 +19,6 @@
       "dest": "/Server/src/server.ts"
     },
     {
-      "src": "/(.*)",
-      "dest": "/Client/$1",
       "handle": "filesystem"
     },
     {
