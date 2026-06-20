@@ -1,8 +1,10 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard' },
@@ -40,13 +42,13 @@ const Navbar = () => {
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end mr-2">
-              <span className="text-sm font-bold text-gray-900">Rishi Shah</span>
+              <span className="text-sm font-bold text-gray-900">{user?.name || 'Admin'}</span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                rishi.shah@aquilaevents.in
+                {user?.email || ''}
               </span>
             </div>
-            <Link
-              to="/"
+            <button
+              onClick={logout}
               className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 shadow-sm"
               title="Logout"
             >
@@ -58,7 +60,7 @@ const Navbar = () => {
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
