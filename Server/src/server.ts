@@ -1,9 +1,12 @@
 import express from "express";
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
 import { Resend } from "resend";
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +14,27 @@ const __dirname = path.dirname(__filename);
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
-const resend = new Resend("re_Xzm3vVVy_31KU3rsrPDBN8mYBykZ18wjW");
+const resend = new Resend(process.env.RESEND_API_KEY || "re_Xzm3vVVy_31KU3rsrPDBN8mYBykZ18wjW");
+// TODO(security): Move the Resend API key to env var and remove the hardcoded fallback in production.
+
+// JWT Secret - secure multi-tiered fallback
+function getJwtSecret(): string {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (fs.existsSync(path.join(__dirname, "..", "jwt_secret.txt"))) {
+    return fs.readFileSync(path.join(__dirname, "..", "jwt_secret.txt"), "utf-8").trim();
+  }
+  console.warn("⚠️ Generating ephemeral JWT secret. Sessions will not persist across restarts!");
+  return crypto.randomBytes(32).toString("hex");
+}
+const JWT_SECRET = getJwtSecret();
+const JWT_EXPIRY = "7d";
+
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "https://admin-promotr.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
 
 // In-memory OTP storage (Email -> {code, expires})
 const otps = new Map<string, { code: string; expires: number }>();
@@ -22,6 +45,7 @@ function generateOTP(): string {
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 
 // Log all requests
 app.use((req, res, next) => {
@@ -29,16 +53,53 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS Configuration for Vercel deployment
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+// CORS Configuration - restrict to known origins only
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
   next();
 });
+
+// Security headers
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header("X-Content-Type-Options", "nosniff");
+  res.header("X-Frame-Options", "DENY");
+  next();
+});
+
+// Authentication middleware
+interface AuthRequest extends Request {
+  user?: { id: string; email: string; name: string; role: string };
+}
+
+function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+  const token = req.cookies?.__Host_promotr_session || req.cookies?.promotr_session;
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }) as {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+    };
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ success: false, message: "Invalid or expired session" });
+  }
+}
 
 // Global headers
 let csvHeaders: string[] = [];
@@ -241,24 +302,67 @@ app.post("/api/auth/verify-otp", (req: Request, res: Response) => {
   if (stored.code === otp) {
     otps.delete(normalizedEmail);
 
-    // Find unauthorized user again to return details
+    // Find user to return details
     const user = allData.find(
       (u) => u.email?.toLowerCase() === normalizedEmail,
     );
 
+    const payload = {
+      id: user.userId,
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
+      role: user.role,
+    };
+
+    // Generate JWT
+    const token = jwt.sign(payload, JWT_SECRET, {
+      algorithm: "HS256",
+      expiresIn: JWT_EXPIRY,
+    });
+
+    // Set secure HttpOnly cookie
+    const isProduction = process.env.NODE_ENV === "production";
+    const cookieName = isProduction ? "__Host-promotr_session" : "promotr_session";
+
+    res.cookie(cookieName, token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/",
+      ...(isProduction ? {} : {}),
+    });
+
+    console.log(`✅ Session created for ${user.email}`);
+
     res.json({
       success: true,
       message: "Login successful",
-      user: {
-        id: user.userId,
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        role: user.role,
-      },
+      user: payload,
     });
   } else {
     res.status(400).json({ success: false, message: "Invalid OTP" });
   }
+});
+
+// Session check - allows frontend to verify if user is logged in
+app.get("/api/auth/me", authenticate, (req: AuthRequest, res: Response) => {
+  res.json({ success: true, user: req.user });
+});
+
+// Logout - clear the session cookie
+app.post("/api/auth/logout", (req: Request, res: Response) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieName = isProduction ? "__Host-promotr_session" : "promotr_session";
+
+  res.clearCookie(cookieName, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  });
+
+  res.json({ success: true, message: "Logged out successfully" });
 });
 
 app.post("/api/auth/signup", (req: Request, res: Response) => {
@@ -312,8 +416,8 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
-// Get all users
-app.get("/api/users", (req: Request, res: Response) => {
+// Get all users (PROTECTED)
+app.get("/api/users", authenticate, (req: AuthRequest, res: Response) => {
   const { role, status, kycStatus } = req.query;
 
   let users = allData.filter((item) => item.userId);
@@ -335,8 +439,8 @@ app.get("/api/users", (req: Request, res: Response) => {
   });
 });
 
-// Get user by ID
-app.get("/api/users/:id", (req: Request, res: Response) => {
+// Get user by ID (PROTECTED)
+app.get("/api/users/:id", authenticate, (req: AuthRequest, res: Response) => {
   const user = allData.find((item) => item.userId === req.params.id);
 
   if (!user) {
@@ -352,8 +456,8 @@ app.get("/api/users/:id", (req: Request, res: Response) => {
   });
 });
 
-// Update user
-app.put("/api/users/:id", (req: Request, res: Response) => {
+// Update user (PROTECTED)
+app.put("/api/users/:id", authenticate, (req: AuthRequest, res: Response) => {
   const userId = req.params.id;
   const updates = req.body;
 
@@ -379,8 +483,8 @@ app.put("/api/users/:id", (req: Request, res: Response) => {
   });
 });
 
-// Get all jobs
-app.get("/api/jobs", (req: Request, res: Response) => {
+// Get all jobs (PROTECTED)
+app.get("/api/jobs", authenticate, (req: AuthRequest, res: Response) => {
   const { status, category } = req.query;
 
   let jobs = allData.filter((item) => item.jobId);
@@ -399,8 +503,8 @@ app.get("/api/jobs", (req: Request, res: Response) => {
   });
 });
 
-// Get job by ID
-app.get("/api/jobs/:id", (req: Request, res: Response) => {
+// Get job by ID (PROTECTED)
+app.get("/api/jobs/:id", authenticate, (req: AuthRequest, res: Response) => {
   const job = allData.find((item) => item.jobId === req.params.id);
 
   if (!job) {
@@ -416,8 +520,8 @@ app.get("/api/jobs/:id", (req: Request, res: Response) => {
   });
 });
 
-// Dashboard Statistics
-app.get("/api/dashboard", (req: Request, res: Response) => {
+// Dashboard Statistics (PROTECTED)
+app.get("/api/dashboard", authenticate, (req: AuthRequest, res: Response) => {
   const users = allData.filter((item) => item.userId && item.role !== "admin");
   const workers = users.filter((u) => u.role === "worker");
   const businesses = users.filter((u) => u.role === "business");
@@ -472,8 +576,8 @@ app.get("/api/dashboard", (req: Request, res: Response) => {
   });
 });
 
-// Analytics Data
-app.get("/api/analytics", (req: Request, res: Response) => {
+// Analytics Data (PROTECTED)
+app.get("/api/analytics", authenticate, (req: AuthRequest, res: Response) => {
   const jobs = allData.filter((item) => item.jobId);
 
   // Revenue by category
@@ -507,8 +611,8 @@ app.get("/api/analytics", (req: Request, res: Response) => {
   });
 });
 
-// KYC Pending Users
-app.get("/api/kyc/pending", (req: Request, res: Response) => {
+// KYC Pending Users (PROTECTED)
+app.get("/api/kyc/pending", authenticate, (req: AuthRequest, res: Response) => {
   const pendingKYC = allData.filter(
     (item) => item.userId && item.kycStatus === "pending",
   );
