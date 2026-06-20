@@ -23,6 +23,10 @@
       "dest": "/Client/assets/$1"
     },
     {
+      "src": "/(.*\\.(?:svg|png|jpg|jpeg|ico|json|txt))",
+      "dest": "/Client/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/Client/index.html"
     }
