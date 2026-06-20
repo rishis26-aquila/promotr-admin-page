@@ -523,8 +523,8 @@ app.get("/api/kyc/pending", (req: Request, res: Response) => {
 // Start server
 if (process.env.NODE_ENV !== "production") {
   app.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
-    console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+    console.log(` Server running on http://0.0.0.0:${PORT}`);
+    console.log(` API endpoints available at http://localhost:${PORT}/api`);
   });
 }
 
