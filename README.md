@@ -55,6 +55,16 @@ The admin panel is built with a focus on:
 
 ## ✨ Key Features
 
+### 🛡️ Enterprise Security (Implemented)
+
+**Production-Grade Protections**
+- **Strict Validation:** Comprehensive Zod schema validation across all request payloads, queries, and parameters.
+- **Role-Based Access Control (RBAC):** Programmatic role enforcement matrix (`Super Admin`, `Manager`) across all mutation endpoints.
+- **Stateless Authentication:** Highly secure `HttpOnly`, `Secure`, and `SameSite=Strict` JWT session management. OTPs are cryptographically hashed and enforce strict 5-minute expirations.
+- **Robust Middlewares:** Complete protection via Helmet (security headers), Double-Submit CSRF cookies, and rigorous rate-limiting (`express-rate-limit`).
+- **Structured Auditing:** Enterprise audit logging capturing actors, IPs, targets, and structural diffs of state changes.
+- **Observability:** Integrated `@sentry/node` and `@sentry/react` for advanced application monitoring and trace profiling.
+
 ### 📊 Dashboard & Analytics
 
 **Overview Section**
@@ -311,7 +321,8 @@ Component Update → UI Render
 | **Morgan**               | HTTP request logging          |
 | **Helmet**               | Security headers              |
 | **CORS**                 | Cross-origin resource sharing |
-| **express-validator**    | Input validation              |
+| **Zod**                  | Strict schema validation      |
+| **Sentry**               | Error tracking & monitoring   |
 | **dotenv**               | Environment variables         |
 
 **Planned Additions:**
