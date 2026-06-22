@@ -41,25 +41,24 @@ class ApiClient {
       }
     }
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      })
+    const response = await fetch(url, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+    const data = await response.json()
 
-      return await response.json()
-    } catch (error) {
-      console.error('API request failed:', error)
-      throw error
+    // Return the parsed body for both success and error responses.
+    // The caller checks data.success to determine outcome.
+    if (!response.ok) {
+      return { success: false, message: data.message || `Request failed (${response.status})`, ...data }
     }
+
+    return data
   }
 
   // Health Check
