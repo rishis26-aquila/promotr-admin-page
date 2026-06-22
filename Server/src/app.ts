@@ -28,8 +28,8 @@ import {
 // Schemas
 import * as schemas from "./schemas.js";
 
-// Database (Mock)
-import { getData, setData, saveData } from "./utils/csv.js";
+// Database
+import { supabase } from "./utils/supabase.js";
 
 const app = express();
 
@@ -74,12 +74,14 @@ app.post(
   validateSchema(schemas.sendOtpSchema, "body"),
   async (req, res) => {
     const { email } = req.body;
-    const allData = getData();
 
-    const user = allData.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase(),
-    );
-    if (!user) {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .ilike("email", email)
+      .single();
+
+    if (error || !user) {
       // Hide internal details, return generic response to prevent email enumeration (though currently it says Unauthorized)
       return res.status(403).json({
         success: false,
@@ -139,7 +141,7 @@ app.post(
   "/api/auth/verify-otp",
   authLimiter,
   validateSchema(schemas.verifyOtpSchema, "body"),
-  (req, res) => {
+  async (req, res) => {
     const { email, otp } = req.body;
     const otpToken = req.cookies?.promotr_otp_pending;
 
@@ -171,12 +173,13 @@ app.post(
       // OTP Valid - Single Use: Clear the pending cookie
       res.clearCookie("promotr_otp_pending");
 
-      const allData = getData();
-      const user = allData.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase(),
-      );
+      const { data: user, error: dbError } = await supabase
+        .from("users")
+        .select("*")
+        .ilike("email", email)
+        .single();
 
-      if (!user)
+      if (dbError || !user)
         return res
           .status(404)
           .json({ success: false, message: "User not found" });
@@ -238,16 +241,18 @@ app.get(
   "/api/users",
   authenticate,
   validateSchema(schemas.userQuerySchema, "query"),
-  (req: AuthRequest, res) => {
-    const allData = getData();
+  async (req: AuthRequest, res) => {
     const { role, status, kycStatus } = req.query;
 
-    let filtered = allData;
-    if (role) filtered = filtered.filter((u) => u.role === role);
-    if (status) filtered = filtered.filter((u) => u.status === status);
-    if (kycStatus) filtered = filtered.filter((u) => u.kycStatus === kycStatus);
+    let query = supabase.from("users").select("*").order("userId", { ascending: true });
+    if (role) query = query.eq("role", role);
+    if (status) query = query.eq("status", status);
+    if (kycStatus) query = query.eq("kycStatus", kycStatus);
 
-    res.json({ success: true, data: filtered });
+    const { data: users, error } = await query;
+    if (error) return res.status(500).json({ success: false, message: error.message });
+
+    res.json({ success: true, data: users });
   },
 );
 
@@ -256,10 +261,14 @@ app.get(
   "/api/users/:id",
   authenticate,
   validateSchema(schemas.userIdParamSchema, "params"),
-  (req: AuthRequest, res) => {
-    const allData = getData();
-    const user = allData.find((u) => u.userId === req.params.id);
-    if (!user)
+  async (req: AuthRequest, res) => {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("userId", req.params.id)
+      .single();
+
+    if (error || !user)
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
@@ -274,31 +283,166 @@ app.put(
   requireRole(["Super Admin", "Manager", "admin"]),
   validateSchema(schemas.userIdParamSchema, "params"),
   validateSchema(schemas.updateUserSchema, "body"),
-  (req: AuthRequest, res) => {
-    const allData = getData();
-    const userIndex = allData.findIndex(
-      (item) => item.userId === req.params.id,
-    );
+  async (req: AuthRequest, res) => {
+    const { data: oldData, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("userId", req.params.id)
+      .single();
 
-    if (userIndex === -1) {
+    if (fetchError || !oldData) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    const oldData = { ...allData[userIndex] };
-    allData[userIndex] = { ...allData[userIndex], ...(req.body as any) };
+    // Strip identity/primary-key fields that should never be updated
+    const { userId, id, createdAt, ...safeBody } = req.body;
 
-    setData(allData);
-    saveData();
+    const { data: updatedUser, error: updateError } = await supabase
+      .from("users")
+      .update(safeBody)
+      .eq("userId", req.params.id)
+      .select()
+      .single();
+
+    if (updateError || !updatedUser) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to update user" });
+    }
 
     auditLog(req, "UPDATE_USER", req.params.id as string, {
       old_value: oldData,
-      new_value: allData[userIndex],
+      new_value: updatedUser,
     });
 
-    res.json({ success: true, data: allData[userIndex] });
+    res.json({ success: true, data: updatedUser });
   },
+);
+
+// GET Jobs: Requires Authentication
+app.get(
+  "/api/jobs",
+  authenticate,
+  validateSchema(schemas.jobQuerySchema, "query"),
+  async (req: AuthRequest, res) => {
+    const { status, category } = req.query;
+
+    let query = supabase
+      .from("users")
+      .select("jobId, jobTitle, jobCategory, jobStatus, businessId, workerId, jobAmount, commission, jobCreatedDate, jobCompletedDate, paymentStatus, city, state, latitude, longitude")
+      .not("jobId", "is", null)
+      .order("jobId", { ascending: true });
+
+    if (status) query = query.eq("jobStatus", status);
+    if (category) query = query.eq("jobCategory", category);
+
+    const { data: jobs, error } = await query;
+    if (error) return res.status(500).json({ success: false, message: error.message });
+
+    res.json({ success: true, data: jobs });
+  }
+);
+
+// GET Job by ID
+app.get(
+  "/api/jobs/:id",
+  authenticate,
+  validateSchema(schemas.jobIdParamSchema, "params"),
+  async (req: AuthRequest, res) => {
+    const { data: job, error } = await supabase
+      .from("users")
+      .select("jobId, jobTitle, jobCategory, jobStatus, businessId, workerId, jobAmount, commission, jobCreatedDate, jobCompletedDate, paymentStatus, city, state, latitude, longitude")
+      .eq("jobId", req.params.id)
+      .not("jobId", "is", null)
+      .single();
+
+    if (error || !job)
+      return res.status(404).json({ success: false, message: "Job not found" });
+    res.json({ success: true, data: job });
+  }
+);
+
+// PATCH Update Job Status (Cancel/Update): Auth -> RBAC -> Logic
+app.patch(
+  "/api/jobs/:id",
+  authenticate,
+  requireRole(["Super Admin", "Manager", "admin"]),
+  validateSchema(schemas.jobIdParamSchema, "params"),
+  async (req: AuthRequest, res) => {
+    const { jobStatus, workerId } = req.body;
+    const updates: any = {};
+    
+    if (jobStatus) updates.jobStatus = jobStatus;
+    if (workerId) updates.workerId = workerId;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: "No valid fields to update" });
+    }
+
+    const { data: updatedJob, error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("jobId", req.params.id)
+      .select()
+      .single();
+
+    if (error || !updatedJob)
+      return res.status(500).json({ success: false, message: "Failed to update job" });
+
+    auditLog(req, "UPDATE_JOB", req.params.id as string, updates);
+    res.json({ success: true, data: updatedJob });
+  }
+);
+
+// PATCH KYC Status (Verify/Reject): Auth -> RBAC -> Logic
+app.patch(
+  "/api/users/:id/kyc",
+  authenticate,
+  requireRole(["Super Admin", "Manager", "admin"]),
+  validateSchema(schemas.userIdParamSchema, "params"),
+  async (req: AuthRequest, res) => {
+    const { status } = req.body;
+    if (!["verified", "rejected"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid KYC status. Must be 'verified' or 'rejected'." });
+    }
+
+    const { data: updatedUser, error } = await supabase
+      .from("users")
+      .update({ kycStatus: status })
+      .eq("userId", req.params.id)
+      .select()
+      .single();
+
+    if (error || !updatedUser)
+      return res.status(500).json({ success: false, message: "Failed to update KYC status" });
+
+    auditLog(req, "UPDATE_KYC", req.params.id as string, { kycStatus: status });
+    res.json({ success: true, data: updatedUser });
+  }
+);
+
+// PATCH Ban user: Auth -> RBAC -> Logic
+app.patch(
+  "/api/users/:id/ban",
+  authenticate,
+  requireRole(["Super Admin", "Manager", "admin"]),
+  validateSchema(schemas.userIdParamSchema, "params"),
+  async (req: AuthRequest, res) => {
+    const { data: updatedUser, error } = await supabase
+      .from("users")
+      .update({ status: "banned" })
+      .eq("userId", req.params.id)
+      .select()
+      .single();
+
+    if (error || !updatedUser)
+      return res.status(500).json({ success: false, message: "Failed to ban user" });
+
+    auditLog(req, "BAN_USER", req.params.id as string, {});
+    res.json({ success: true, data: updatedUser });
+  }
 );
 
 // Dashboard Analytics: Auth -> RBAC -> Logic
@@ -306,13 +450,18 @@ app.get(
   "/api/dashboard",
   authenticate,
   requireRole(["Super Admin", "Manager", "admin"]),
-  (req: AuthRequest, res) => {
-    const allData = getData();
+  async (req: AuthRequest, res) => {
+    const { data: allData, error } = await supabase.from("users").select("jobStatus, kycStatus, jobAmount, commission, paymentStatus");
+    
+    if (error || !allData) {
+      return res.status(500).json({ success: false, message: "Failed to fetch analytics" });
+    }
+
     const totalUsers = allData.length;
     const activeJobs = allData.filter((u) => u.jobStatus === "active").length;
     const pendingKYC = allData.filter((u) => u.kycStatus === "pending").length;
 
-    // Compute revenue and commission from CSV fields
+    // Compute revenue and commission from fields
     const totalRevenue = allData.reduce(
       (sum, u) => sum + (parseFloat(u.jobAmount) || 0),
       0,
@@ -322,7 +471,22 @@ app.get(
       0,
     );
 
-    // Frontend expects: data.overview.{totalUsers, activeJobs, pendingKYC, totalRevenue, totalCommission}
+    // Job counts by status
+    const jobsByStatus = allData.reduce((acc: Record<string, number>, u) => {
+      if (u.jobStatus) {
+        acc[u.jobStatus] = (acc[u.jobStatus] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    // Payment status breakdown
+    const paymentsByStatus = allData.reduce((acc: Record<string, number>, u) => {
+      if (u.paymentStatus) {
+        acc[u.paymentStatus] = (acc[u.paymentStatus] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
     res.json({
       success: true,
       data: {
@@ -333,6 +497,8 @@ app.get(
           totalRevenue,
           totalCommission,
         },
+        jobsByStatus,
+        paymentsByStatus,
       },
     });
   },
@@ -343,8 +509,12 @@ app.get(
   "/api/analytics",
   authenticate,
   requireRole(["Super Admin", "Manager", "admin"]),
-  (req: AuthRequest, res) => {
-    const allData = getData();
+  async (req: AuthRequest, res) => {
+    const { data: allData, error } = await supabase.from("users").select("jobCategory, jobAmount, city");
+
+    if (error || !allData) {
+      return res.status(500).json({ success: false, message: "Failed to fetch analytics" });
+    }
 
     // Revenue by job category
     const revenueByCategory: Record<string, number> = {};

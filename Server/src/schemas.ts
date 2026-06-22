@@ -30,12 +30,13 @@ export const userIdParamSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  firstName: z.string().max(50).optional(),
-  lastName: z.string().max(50).optional(),
-  role: z.enum(["Super Admin", "Manager", "Viewer"]).optional(),
-  status: z.enum(["active", "inactive", "suspended"]).optional(),
-  kycStatus: z.enum(["pending", "approved", "rejected"]).optional(),
-});
+  userName: z.string().max(100).optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.union([z.string(), z.number()]).optional(),
+  role: z.string().optional(),
+  status: z.string().optional(),
+  kycStatus: z.string().optional(),
+}).passthrough();
 
 export const jobQuerySchema = z.object({
   status: z.string().optional(),
