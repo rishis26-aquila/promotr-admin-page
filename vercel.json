@@ -12,7 +12,7 @@
       "src": "Server/src/server.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "dummydata.csv"
+        "includeFiles": "../dummydata.csv"
       }
     }
   ],
