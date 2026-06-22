@@ -7,6 +7,7 @@ const __dirname = path.dirname(__filename);
 
 const csvPath = path.join(__dirname, "..", "..", "dummydata.csv");
 const fallbackPath = path.join(process.cwd(), "Server", "dummydata.csv");
+const vercelPath = path.join(process.cwd(), "dummydata.csv");
 
 let allData: any[] = [];
 let csvHeaders: string[] = [];
@@ -48,11 +49,12 @@ export function loadData() {
       console.log(`✅ Loaded ${allData.length} records from CSV at ${csvPath}`);
     } else if (fs.existsSync(fallbackPath)) {
       allData = parseCSV(fallbackPath);
-      console.log(
-        `✅ Loaded ${allData.length} records from CSV at fallback path ${fallbackPath}`,
-      );
+      console.log(`✅ Loaded ${allData.length} records from CSV at fallback path ${fallbackPath}`);
+    } else if (fs.existsSync(vercelPath)) {
+      allData = parseCSV(vercelPath);
+      console.log(`✅ Loaded ${allData.length} records from CSV at Vercel path ${vercelPath}`);
     } else {
-      console.error(`❌ CSV file not found at ${csvPath} or ${fallbackPath}`);
+      console.error(`❌ CSV file not found at ${csvPath}, ${fallbackPath}, or ${vercelPath}`);
     }
   } catch (error) {
     console.error("❌ Error loading CSV:", error);
@@ -88,8 +90,10 @@ export function saveData() {
 
     if (fs.existsSync(csvPath)) {
       fs.writeFileSync(csvPath, csvContent, "utf-8");
-    } else {
+    } else if (fs.existsSync(fallbackPath)) {
       fs.writeFileSync(fallbackPath, csvContent, "utf-8");
+    } else {
+      fs.writeFileSync(vercelPath, csvContent, "utf-8");
     }
     console.log(`✅ Saved ${allData.length} records to CSV`);
   } catch (error) {

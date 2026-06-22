@@ -92,12 +92,18 @@ app.post(
     );
 
     try {
-      await resend.emails.send({
-        from: "Promotr Admin <onboarding@resend.dev>",
-        to: email,
-        subject: `Your Admin Verification Code: ${otp}`,
-        html: `<p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`,
-      });
+      if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith("re_")) {
+        await resend.emails.send({
+          from: "Promotr Admin <onboarding@resend.dev>",
+          to: email,
+          subject: `Your Admin Verification Code: ${otp}`,
+          html: `<p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`,
+        });
+      } else {
+        console.log(`\n================================`);
+        console.log(`🔑 DEV MODE OTP for ${email}: ${otp}`);
+        console.log(`================================\n`);
+      }
 
       const isProduction = process.env.NODE_ENV === "production";
       res.cookie("promotr_otp_pending", otpToken, {
