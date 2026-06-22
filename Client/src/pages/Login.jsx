@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
@@ -11,7 +11,17 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [countdown, setCountdown] = useState(0)
 
+  useEffect(() => {
+    let timer
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(timer)
+  }, [countdown])
   const handleSendOTP = async (e) => {
     e.preventDefault()
     setError('')
@@ -22,6 +32,7 @@ export default function Login() {
 
       if (data.success) {
         setOtpSent(true)
+        setCountdown(120) // 2 minutes
       } else {
         setError(data.message || data.error || 'Failed to send OTP')
       }
@@ -165,11 +176,28 @@ export default function Login() {
                 {loading ? 'Verifying...' : 'Access Dashboard'}
               </button>
 
-              <div className="text-center">
+              <div className="text-center flex flex-col space-y-3">
                 <button
                   type="button"
-                  onClick={() => setOtpSent(false)}
-                  className="text-sm font-bold text-primary hover:underline"
+                  onClick={handleSendOTP}
+                  disabled={countdown > 0 || loading}
+                  className={`text-sm font-bold ${
+                    countdown > 0 
+                      ? 'text-gray-400 cursor-not-allowed' 
+                      : 'text-primary hover:underline'
+                  }`}
+                >
+                  {countdown > 0 
+                    ? `Resend OTP in ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}` 
+                    : 'Resend OTP'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false)
+                    setCountdown(0)
+                  }}
+                  className="text-sm font-bold text-gray-500 hover:text-gray-700 hover:underline"
                 >
                   ← Use a different email
                 </button>
