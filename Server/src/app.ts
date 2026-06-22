@@ -116,7 +116,7 @@ app.post(
                 
                 <div style="display: inline-block; background: #fef2f2; border: 1px solid #fee2e2; padding: 8px 16px; border-radius: 20px;">
                   <p style="color: #ef4444; font-size: 13px; font-weight: 700; margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <span style="font-size: 16px;">⏱️</span> Code expires in 5 minutes
+                    Code expires in 5 minutes
                   </p>
                 </div>
               </div>
