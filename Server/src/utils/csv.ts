@@ -28,18 +28,38 @@ let allData: any[] = [];
 let csvHeaders: string[] = [];
 let resolvedCsvPath: string | null = null;
 
+function parseCsvLine(text: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
 export function parseCSV(filePath: string) {
   const content = fs.readFileSync(filePath, "utf-8");
   const lines = content.split("\n").filter((line) => line.trim() !== "");
   if (lines.length === 0) return [];
 
   const firstLine = lines[0] || "";
-  csvHeaders = firstLine.split(",").map((h) => h.trim());
+  csvHeaders = parseCsvLine(firstLine).map((h) => h.trim());
   const data = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const currentline = lines[i]?.split(",");
-    if (!currentline || currentline.length < csvHeaders.length) continue;
+    if (!lines[i]) continue;
+    const currentline = parseCsvLine(lines[i] as string);
+    if (currentline.length < csvHeaders.length) continue;
 
     const obj: any = {};
     for (let j = 0; j < csvHeaders.length; j++) {
@@ -48,6 +68,8 @@ export function parseCSV(filePath: string) {
       if (!header || val === undefined) continue;
 
       let cleanVal = val.trim();
+      // Quotes are already stripped by the parsing logic if we wanted, 
+      // but let's strip them here if they still exist at boundaries
       if (cleanVal.startsWith('"') && cleanVal.endsWith('"')) {
         cleanVal = cleanVal.substring(1, cleanVal.length - 1);
       }
