@@ -208,7 +208,7 @@ export default function Login() {
           <div className="mt-10 pt-10 border-t border-gray-100 text-center lg:text-left">
             <p className="text-gray-500 font-medium">
               Need assistance?{' '}
-              <a href="#" className="text-primary font-black hover:underline ml-1">
+              <a href="mailto:hello@promotr.co.in?subject=Promotr%20Admin%20Login%20Support" className="text-primary font-black hover:underline ml-1">
                 Contact Ops
               </a>
             </p>
