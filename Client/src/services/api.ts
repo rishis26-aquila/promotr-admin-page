@@ -109,14 +109,18 @@ class ApiClient {
     })
   }
 
-  // Jobs
-  async getJobs(filters?: { status?: string; category?: string }) {
-    const params = new URLSearchParams(filters as any)
-    return this.request(`/jobs?${params}`)
+  async updateKycStatus(userId: string, status: 'verified' | 'rejected') {
+    return this.request(`/users/${userId}/kyc`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
   }
 
-  async getJobById(id: string) {
-    return this.request(`/jobs/${id}`)
+  async banUser(userId: string) {
+    return this.request(`/users/${userId}/ban`, {
+      method: 'PATCH',
+      body: JSON.stringify({}),
+    })
   }
 
   // Dashboard

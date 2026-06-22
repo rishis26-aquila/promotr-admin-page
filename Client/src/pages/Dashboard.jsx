@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import Tabs from '../components/Tabs'
 
 const Dashboard = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -75,10 +77,10 @@ const Dashboard = () => {
       <div className="space-y-8">
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-4 mb-4">
-          <button className="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm">
-            + Create Job
-          </button>
-          <button className="bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-lg font-bold text-sm">
+          <button 
+            onClick={() => navigate('/people?tab=kyc')}
+            className="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary/90"
+          >
             Approve KYC
           </button>
         </div>

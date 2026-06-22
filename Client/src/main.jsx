@@ -9,7 +9,6 @@ import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import People from './pages/People.jsx'
-import Jobs from './pages/Jobs.jsx'
 import Finance from './pages/Finance.jsx'
 import Admin from './pages/Admin.jsx'
 import NotFound from './pages/NotFound.jsx'
@@ -49,16 +48,6 @@ createRoot(document.getElementById('root')).render(
               <ProtectedRoute>
                 <Layout>
                   <People />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/jobs"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Jobs />
                 </Layout>
               </ProtectedRoute>
             }
