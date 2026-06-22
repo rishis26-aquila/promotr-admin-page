@@ -27,7 +27,7 @@ export function validateSchema(
       value: result.data,
       writable: true,
       enumerable: true,
-      configurable: true
+      configurable: true,
     });
     next();
   };

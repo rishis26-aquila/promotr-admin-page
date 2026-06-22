@@ -113,39 +113,42 @@ app.post(
   <body
     style="
       margin: 0;
-      padding: 48px 32px;
+      padding: 24px;
       background: #f5f7fa;
       font-family:
         -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
         Helvetica, Arial, sans-serif;
     "
   >
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+    >
       <tr>
         <td align="center">
           <table
-            width="760"
+            role="presentation"
+            width="100%"
             cellpadding="0"
             cellspacing="0"
             border="0"
             style="
-              max-width: 760px;
-              width: 100%;
+              max-width: 680px;
               background: #ffffff;
               border: 1px solid #e5e7eb;
-              border-radius: 24px;
+              border-radius: 20px;
               overflow: hidden;
-              box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
             "
           >
             <tr>
-              <td style="padding: 0">
-                <div style="height: 6px; background: #f06c28"></div>
-              </td>
+              <td style="height: 5px; background: #f06c28"></td>
             </tr>
 
             <tr>
-              <td style="padding: 56px 64px 32px">
+              <td style="padding: 40px 32px 24px">
                 <div
                   style="
                     font-size: 12px;
@@ -160,11 +163,11 @@ app.post(
 
                 <h1
                   style="
-                    margin: 18px 0 0;
-                    font-size: 38px;
-                    line-height: 1.15;
-                    font-weight: 800;
+                    margin: 16px 0 0;
+                    font-size: 32px;
+                    line-height: 1.2;
                     color: #0f172a;
+                    font-weight: 800;
                   "
                 >
                   Administrator Verification
@@ -172,57 +175,57 @@ app.post(
 
                 <p
                   style="
-                    margin: 18px 0 0;
+                    margin: 16px 0 0;
                     color: #475569;
-                    font-size: 16px;
-                    line-height: 1.9;
+                    font-size: 15px;
+                    line-height: 1.8;
                   "
                 >
-                  A sign-in attempt requires additional verification before
-                  access can be granted to the Promotr administration platform.
-                  Use the authentication code below to continue securely.
+                  A sign-in attempt requires verification before access can be
+                  granted to the Promotr administration platform. Use the
+                  authentication code below to continue securely.
                 </p>
               </td>
             </tr>
 
             <tr>
-              <td style="padding: 0 64px">
+              <td style="padding: 0 32px">
                 <div
                   style="
                     background: #fff7ed;
                     border: 1px solid #fed7aa;
-                    border-radius: 14px;
-                    padding: 16px 20px;
+                    border-radius: 12px;
+                    padding: 14px 16px;
                   "
                 >
                   <span
                     style="color: #9a3412; font-size: 14px; font-weight: 600"
                   >
-                    Security verification required for administrator access
+                    Security verification required
                   </span>
                 </div>
               </td>
             </tr>
 
             <tr>
-              <td style="padding: 40px 64px">
+              <td style="padding: 32px">
                 <div
                   style="
                     background: #fafafa;
                     border: 1px solid #e5e7eb;
-                    border-radius: 18px;
+                    border-radius: 16px;
                     text-align: center;
-                    padding: 48px 32px;
+                    padding: 36px 20px;
                   "
                 >
                   <div
                     style="
-                      color: #64748b;
-                      font-size: 12px;
+                      font-size: 11px;
                       font-weight: 700;
                       letter-spacing: 2px;
                       text-transform: uppercase;
-                      margin-bottom: 18px;
+                      color: #64748b;
+                      margin-bottom: 16px;
                     "
                   >
                     One-Time Passcode
@@ -231,11 +234,11 @@ app.post(
                   <div
                     style="
                       font-family: SFMono-Regular, Consolas, Monaco, monospace;
-                      font-size: 56px;
+                      font-size: 42px;
                       font-weight: 800;
-                      letter-spacing: 18px;
-                      color: #111827;
+                      letter-spacing: 10px;
                       line-height: 1;
+                      color: #111827;
                     "
                   >
                     ${otp}
@@ -245,55 +248,38 @@ app.post(
             </tr>
 
             <tr>
-              <td style="padding: 0 64px">
-                <table
-                  width="100%"
-                  cellpadding="0"
-                  cellspacing="0"
-                  border="0"
-                  style="border: 1px solid #e5e7eb; border-radius: 16px"
+              <td style="padding: 0 32px">
+                <div
+                  style="
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    padding: 18px 20px;
+                  "
                 >
-                  <tr>
-                    <td style="padding: 22px 24px">
-                      <p style="margin: 0; color: #334155; font-size: 14px">
-                        <strong>Code Validity:</strong> 10 minutes
-                      </p>
+                  <p style="margin: 0; color: #334155; font-size: 14px">
+                    <strong>Validity:</strong> 10 minutes
+                  </p>
 
-                      <p
-                        style="
-                          margin: 14px 0 0;
-                          color: #334155;
-                          font-size: 14px;
-                        "
-                      >
-                        <strong>Usage:</strong> Single authentication attempt
-                      </p>
+                  <p style="margin: 12px 0 0; color: #334155; font-size: 14px">
+                    <strong>Usage:</strong> Single authentication attempt
+                  </p>
 
-                      <p
-                        style="
-                          margin: 14px 0 0;
-                          color: #334155;
-                          font-size: 14px;
-                        "
-                      >
-                        <strong>Purpose:</strong> Secure administrator access
-                        verification
-                      </p>
-                    </td>
-                  </tr>
-                </table>
+                  <p style="margin: 12px 0 0; color: #334155; font-size: 14px">
+                    <strong>Access:</strong> Administrator dashboard
+                  </p>
+                </div>
               </td>
             </tr>
 
             <tr>
-              <td style="padding: 48px 64px">
-                <div style="border-top: 1px solid #e5e7eb; padding-top: 32px">
+              <td style="padding: 40px 32px">
+                <div style="border-top: 1px solid #e5e7eb; padding-top: 28px">
                   <p
                     style="
                       margin: 0;
                       color: #475569;
                       font-size: 14px;
-                      line-height: 1.9;
+                      line-height: 1.8;
                     "
                   >
                     If you did not initiate this sign-in request, you may safely
@@ -303,7 +289,7 @@ app.post(
 
                   <p
                     style="
-                      margin: 30px 0 0;
+                      margin: 24px 0 0;
                       color: #111827;
                       font-size: 14px;
                       font-weight: 700;
@@ -312,7 +298,7 @@ app.post(
                     Promotr Security Team
                   </p>
 
-                  <p style="margin: 10px 0 0; color: #94a3b8; font-size: 12px">
+                  <p style="margin: 8px 0 0; color: #94a3b8; font-size: 12px">
                     © ${new Date().getFullYear()} Promotr Technologies. All
                     rights reserved.
                   </p>
@@ -325,6 +311,7 @@ app.post(
     </table>
   </body>
 </html>
+
 
           `,
         });
@@ -532,8 +519,14 @@ app.get(
     const pendingKYC = allData.filter((u) => u.kycStatus === "pending").length;
 
     // Compute revenue and commission from CSV fields
-    const totalRevenue = allData.reduce((sum, u) => sum + (parseFloat(u.jobAmount) || 0), 0);
-    const totalCommission = allData.reduce((sum, u) => sum + (parseFloat(u.commission) || 0), 0);
+    const totalRevenue = allData.reduce(
+      (sum, u) => sum + (parseFloat(u.jobAmount) || 0),
+      0,
+    );
+    const totalCommission = allData.reduce(
+      (sum, u) => sum + (parseFloat(u.commission) || 0),
+      0,
+    );
 
     // Frontend expects: data.overview.{totalUsers, activeJobs, pendingKYC, totalRevenue, totalCommission}
     res.json({
@@ -564,7 +557,8 @@ app.get(
     for (const row of allData) {
       if (row.jobCategory && row.jobAmount) {
         const cat = row.jobCategory;
-        revenueByCategory[cat] = (revenueByCategory[cat] || 0) + (parseFloat(row.jobAmount) || 0);
+        revenueByCategory[cat] =
+          (revenueByCategory[cat] || 0) + (parseFloat(row.jobAmount) || 0);
       }
     }
 

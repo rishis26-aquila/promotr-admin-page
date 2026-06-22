@@ -55,7 +55,11 @@ class ApiClient {
     // Return the parsed body for both success and error responses.
     // The caller checks data.success to determine outcome.
     if (!response.ok) {
-      return { success: false, message: data.message || `Request failed (${response.status})`, ...data }
+      return {
+        success: false,
+        message: data.message || `Request failed (${response.status})`,
+        ...data,
+      }
     }
 
     return data

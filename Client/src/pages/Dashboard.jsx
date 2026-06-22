@@ -23,7 +23,7 @@ const Dashboard = () => {
         } else {
           console.error('Failed to load dashboard stats:', dashRes.message)
         }
-        
+
         if (analyticsRes.success && analyticsRes.data) {
           setAnalytics(analyticsRes.data)
         } else {

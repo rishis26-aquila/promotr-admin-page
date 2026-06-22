@@ -30,15 +30,15 @@ let resolvedCsvPath: string | null = null;
 
 function parseCsvLine(text: string): string[] {
   const result: string[] = [];
-  let current = '';
+  let current = "";
   let inQuotes = false;
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     if (char === '"') {
       inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === "," && !inQuotes) {
       result.push(current);
-      current = '';
+      current = "";
     } else {
       current += char;
     }
@@ -68,7 +68,7 @@ export function parseCSV(filePath: string) {
       if (!header || val === undefined) continue;
 
       let cleanVal = val.trim();
-      // Quotes are already stripped by the parsing logic if we wanted, 
+      // Quotes are already stripped by the parsing logic if we wanted,
       // but let's strip them here if they still exist at boundaries
       if (cleanVal.startsWith('"') && cleanVal.endsWith('"')) {
         cleanVal = cleanVal.substring(1, cleanVal.length - 1);

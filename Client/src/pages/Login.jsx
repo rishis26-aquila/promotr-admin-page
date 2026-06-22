@@ -182,13 +182,13 @@ export default function Login() {
                   onClick={handleSendOTP}
                   disabled={countdown > 0 || loading}
                   className={`text-sm font-bold ${
-                    countdown > 0 
-                      ? 'text-gray-400 cursor-not-allowed' 
+                    countdown > 0
+                      ? 'text-gray-400 cursor-not-allowed'
                       : 'text-primary hover:underline'
                   }`}
                 >
-                  {countdown > 0 
-                    ? `Resend OTP in ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}` 
+                  {countdown > 0
+                    ? `Resend OTP in ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}`
                     : 'Resend OTP'}
                 </button>
                 <button
