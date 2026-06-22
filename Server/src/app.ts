@@ -104,13 +104,23 @@ app.post(
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
     <title>Promotr Verification</title>
+    <style>
+      @media only screen and (max-width: 600px) {
+        .outer-body { padding: 12px !important; }
+        .content-wrapper { padding: 24px 20px !important; }
+        .content-section { padding: 0 20px !important; }
+        .otp-box { padding: 24px 16px !important; }
+        .otp-text { font-size: 36px !important; letter-spacing: 8px !important; }
+      }
+    </style>
   </head>
 
   <body
+    class="outer-body"
     style="
       margin: 0;
       padding: 24px;
@@ -148,7 +158,7 @@ app.post(
             </tr>
 
             <tr>
-              <td style="padding: 40px 32px 24px">
+              <td class="content-wrapper" style="padding: 40px 32px 24px">
                 <div
                   style="
                     font-size: 12px;
@@ -189,7 +199,7 @@ app.post(
             </tr>
 
             <tr>
-              <td style="padding: 0 32px">
+              <td class="content-section" style="padding: 0 32px">
                 <div
                   style="
                     background: #fff7ed;
@@ -208,8 +218,9 @@ app.post(
             </tr>
 
             <tr>
-              <td style="padding: 32px">
+              <td class="content-section" style="padding: 32px">
                 <div
+                  class="otp-box"
                   style="
                     background: #fafafa;
                     border: 1px solid #e5e7eb;
@@ -232,6 +243,7 @@ app.post(
                   </div>
 
                   <div
+                    class="otp-text"
                     style="
                       font-family: SFMono-Regular, Consolas, Monaco, monospace;
                       font-size: 42px;
@@ -248,7 +260,7 @@ app.post(
             </tr>
 
             <tr>
-              <td style="padding: 0 32px">
+              <td class="content-section" style="padding: 0 32px">
                 <div
                   style="
                     border: 1px solid #e5e7eb;
@@ -272,7 +284,7 @@ app.post(
             </tr>
 
             <tr>
-              <td style="padding: 40px 32px">
+              <td class="content-wrapper" style="padding: 40px 32px">
                 <div style="border-top: 1px solid #e5e7eb; padding-top: 28px">
                   <p
                     style="
