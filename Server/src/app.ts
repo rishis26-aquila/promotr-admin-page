@@ -2,8 +2,14 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { Resend } from "resend";
 import jwt from "jsonwebtoken";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middlewares
 import { authenticate, requireRole, JWT_SECRET } from "./middlewares/auth.js";
