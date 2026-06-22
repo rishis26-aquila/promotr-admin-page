@@ -119,12 +119,11 @@ app.post(
     </style>
   </head>
 
-  <body
-    class="outer-body"
-    style="
-      margin: 0;
-      padding: 24px;
-      background: #f5f7fa;
+    <body
+      style="
+        margin: 0;
+        padding: 16px;
+        background: #f5f7fa;
       font-family:
         -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
         Helvetica, Arial, sans-serif;
@@ -158,7 +157,7 @@ app.post(
             </tr>
 
             <tr>
-              <td class="content-wrapper" style="padding: 40px 32px 24px">
+              <td style="padding: 28px 20px 20px">
                 <div
                   style="
                     font-size: 12px;
@@ -199,17 +198,17 @@ app.post(
             </tr>
 
             <tr>
-              <td class="content-section" style="padding: 0 32px">
+              <td style="padding: 0 20px">
                 <div
                   style="
-                    background: #fff7ed;
-                    border: 1px solid #fed7aa;
+                    background: transparent;
+                    border: 1px solid #f06c28;
                     border-radius: 12px;
-                    padding: 14px 16px;
+                    padding: 12px 16px;
                   "
                 >
                   <span
-                    style="color: #9a3412; font-size: 14px; font-weight: 600"
+                    style="color: #f06c28; font-size: 14px; font-weight: 600"
                   >
                     Security verification required
                   </span>
@@ -218,15 +217,14 @@ app.post(
             </tr>
 
             <tr>
-              <td class="content-section" style="padding: 32px">
+              <td style="padding: 24px 20px">
                 <div
-                  class="otp-box"
                   style="
                     background: #fafafa;
                     border: 1px solid #e5e7eb;
                     border-radius: 16px;
                     text-align: center;
-                    padding: 36px 20px;
+                    padding: 24px 16px;
                   "
                 >
                   <div
@@ -243,12 +241,11 @@ app.post(
                   </div>
 
                   <div
-                    class="otp-text"
                     style="
                       font-family: SFMono-Regular, Consolas, Monaco, monospace;
-                      font-size: 42px;
+                      font-size: 38px;
                       font-weight: 800;
-                      letter-spacing: 10px;
+                      letter-spacing: 8px;
                       line-height: 1;
                       color: #111827;
                     "
@@ -260,12 +257,12 @@ app.post(
             </tr>
 
             <tr>
-              <td class="content-section" style="padding: 0 32px">
+              <td style="padding: 0 20px">
                 <div
                   style="
                     border: 1px solid #e5e7eb;
                     border-radius: 12px;
-                    padding: 18px 20px;
+                    padding: 16px 20px;
                   "
                 >
                   <p style="margin: 0; color: #334155; font-size: 14px">
@@ -284,8 +281,8 @@ app.post(
             </tr>
 
             <tr>
-              <td class="content-wrapper" style="padding: 40px 32px">
-                <div style="border-top: 1px solid #e5e7eb; padding-top: 28px">
+              <td style="padding: 28px 20px">
+                <div style="border-top: 1px solid #e5e7eb; padding-top: 24px">
                   <p
                     style="
                       margin: 0;
