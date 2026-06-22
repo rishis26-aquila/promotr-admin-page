@@ -51,12 +51,11 @@ app.use("/api/", csrfProtect);
 app.get("/api/auth/csrf", (req, res) => {
   const csrfToken = crypto.randomBytes(32).toString("hex");
   const isProduction = process.env.NODE_ENV === "production";
-  const cookieName = isProduction ? "__Host-promotr_csrf" : "promotr_csrf";
 
-  res.cookie(cookieName, csrfToken, {
+  res.cookie("promotr_csrf", csrfToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "strict" : "lax",
+    sameSite: "lax",
     path: "/",
   });
 
@@ -92,7 +91,10 @@ app.post(
     );
 
     try {
-      if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith("re_")) {
+      if (
+        process.env.RESEND_API_KEY &&
+        process.env.RESEND_API_KEY.startsWith("re_")
+      ) {
         await resend.emails.send({
           from: "Promotr Admin <onboarding@resend.dev>",
           to: email,
@@ -184,14 +186,11 @@ app.post(
       );
 
       const isProduction = process.env.NODE_ENV === "production";
-      const sessionCookieName = isProduction
-        ? "__Host-promotr_session"
-        : "promotr_session";
 
-      res.cookie(sessionCookieName, sessionToken, {
+      res.cookie("promotr_session", sessionToken, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "strict" : "lax",
+        sameSite: "lax",
         maxAge: 8 * 60 * 60 * 1000,
         path: "/",
       });
@@ -212,9 +211,7 @@ app.post(
 );
 
 app.post("/api/auth/logout", (req, res) => {
-  res.clearCookie("__Host-promotr_session");
   res.clearCookie("promotr_session");
-  res.clearCookie("__Host-promotr_csrf");
   res.clearCookie("promotr_csrf");
   auditLog(req, "LOGOUT", "self", {});
   res.json({ success: true });
@@ -300,31 +297,67 @@ app.put(
 app.get(
   "/api/dashboard",
   authenticate,
-  requireRole(["Super Admin", "Manager"]),
+  requireRole(["Super Admin", "Manager", "admin"]),
   (req: AuthRequest, res) => {
     const allData = getData();
     const totalUsers = allData.length;
     const activeJobs = allData.filter((u) => u.jobStatus === "active").length;
-    const pendingKyc = allData.filter((u) => u.kycStatus === "pending").length;
+    const pendingKYC = allData.filter((u) => u.kycStatus === "pending").length;
 
-    res.json({ success: true, data: { totalUsers, activeJobs, pendingKyc } });
-  },
-);
+    // Compute revenue and commission from CSV fields
+    const totalRevenue = allData.reduce((sum, u) => sum + (parseFloat(u.jobAmount) || 0), 0);
+    const totalCommission = allData.reduce((sum, u) => sum + (parseFloat(u.commission) || 0), 0);
 
-// Analytics Chart Data: Auth -> Logic
-app.get(
-  "/api/analytics",
-  authenticate,
-  requireRole(["Super Admin", "Manager"]),
-  (req: AuthRequest, res) => {
+    // Frontend expects: data.overview.{totalUsers, activeJobs, pendingKYC, totalRevenue, totalCommission}
     res.json({
       success: true,
       data: {
-        usersByMonth: [
-          { name: "Jan", users: 4000 },
-          { name: "Feb", users: 3000 },
-          { name: "Mar", users: 5000 },
-        ],
+        overview: {
+          totalUsers,
+          activeJobs,
+          pendingKYC,
+          totalRevenue,
+          totalCommission,
+        },
+      },
+    });
+  },
+);
+
+// Analytics: Auth -> RBAC -> Logic
+app.get(
+  "/api/analytics",
+  authenticate,
+  requireRole(["Super Admin", "Manager", "admin"]),
+  (req: AuthRequest, res) => {
+    const allData = getData();
+
+    // Revenue by job category
+    const revenueByCategory: Record<string, number> = {};
+    for (const row of allData) {
+      if (row.jobCategory && row.jobAmount) {
+        const cat = row.jobCategory;
+        revenueByCategory[cat] = (revenueByCategory[cat] || 0) + (parseFloat(row.jobAmount) || 0);
+      }
+    }
+
+    // Top cities by job count
+    const cityCount: Record<string, number> = {};
+    for (const row of allData) {
+      if (row.city) {
+        cityCount[row.city] = (cityCount[row.city] || 0) + 1;
+      }
+    }
+    const topCities = Object.entries(cityCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    // Frontend expects: data.revenueByCategory and data.topCities
+    res.json({
+      success: true,
+      data: {
+        revenueByCategory,
+        topCities,
       },
     });
   },

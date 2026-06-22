@@ -33,8 +33,7 @@ export function authenticate(
   res: Response,
   next: NextFunction,
 ) {
-  const token =
-    req.cookies?.["__Host-promotr_session"] || req.cookies?.promotr_session;
+  const token = req.cookies?.promotr_session;
 
   if (!token) {
     return res
@@ -52,7 +51,6 @@ export function authenticate(
     req.user = decoded;
     next();
   } catch (error) {
-    res.clearCookie("__Host-promotr_session");
     res.clearCookie("promotr_session");
     return res
       .status(401)

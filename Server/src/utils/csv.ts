@@ -8,11 +8,11 @@ const __dirname = path.dirname(__filename);
 // Multiple candidate paths for the CSV file.
 // The order matters: most specific first, broadest last.
 const CSV_CANDIDATES = [
-  path.join(__dirname, "..", "..", "dummydata.csv"),       // Local dev: Server/dummydata.csv relative to src/utils/
-  path.join(process.cwd(), "Server", "dummydata.csv"),    // Local dev: from project root
-  path.join(process.cwd(), "dummydata.csv"),               // Vercel: bundled at function root
-  path.join(__dirname, "..", "dummydata.csv"),              // Vercel: bundled relative to src/
-  path.join(__dirname, "dummydata.csv"),                    // Vercel: bundled in same dir
+  path.join(__dirname, "..", "..", "dummydata.csv"), // Local dev: Server/dummydata.csv relative to src/utils/
+  path.join(process.cwd(), "Server", "dummydata.csv"), // Local dev: from project root
+  path.join(process.cwd(), "dummydata.csv"), // Vercel: bundled at function root
+  path.join(__dirname, "..", "dummydata.csv"), // Vercel: bundled relative to src/
+  path.join(__dirname, "dummydata.csv"), // Vercel: bundled in same dir
 ];
 
 function findCsvPath(): string | null {
@@ -65,7 +65,9 @@ export function loadData() {
       allData = parseCSV(resolvedCsvPath);
       console.log(`Loaded ${allData.length} records from ${resolvedCsvPath}`);
     } else {
-      console.error(`CSV file not found. Searched paths: ${CSV_CANDIDATES.join(", ")}`);
+      console.error(
+        `CSV file not found. Searched paths: ${CSV_CANDIDATES.join(", ")}`,
+      );
     }
   } catch (error) {
     console.error("Error loading CSV:", error);

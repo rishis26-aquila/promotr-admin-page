@@ -81,9 +81,7 @@ export function csrfProtect(req: Request, res: Response, next: NextFunction) {
   }
 
   const tokenFromHeader = req.headers["x-csrf-token"];
-  const isProduction = process.env.NODE_ENV === "production";
-  const cookieName = isProduction ? "__Host-promotr_csrf" : "promotr_csrf";
-  const tokenFromCookie = req.cookies?.[cookieName];
+  const tokenFromCookie = req.cookies?.promotr_csrf;
 
   if (
     !tokenFromHeader ||
