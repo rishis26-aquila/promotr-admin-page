@@ -99,7 +99,45 @@ app.post(
           from: "Promotr Admin <onboarding@resend.dev>",
           to: email,
           subject: `Your Admin Verification Code: ${otp}`,
-          html: `<p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`,
+          html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f9fafb;">
+  <div style="font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 40px auto; background-color: #ffffff; padding: 48px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); border: 1px solid rgba(240, 108, 40, 0.1);">
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h1 style="color: #F06C28; font-size: 38px; font-weight: 900; margin: 0; letter-spacing: -1.5px; text-shadow: 0 2px 10px rgba(240,108,40,0.15);">Promotr.</h1>
+      <p style="color: #94a3b8; font-size: 12px; font-weight: 700; margin-top: 8px; letter-spacing: 3px; text-transform: uppercase;">Admin Gatekeeper</p>
+    </div>
+    
+    <div style="background-color: #ffffff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+      <h2 style="color: #0f172a; font-size: 24px; font-weight: 800; margin-top: 0; margin-bottom: 12px; letter-spacing: -0.5px;">Verification Required</h2>
+      <p style="color: #64748b; font-size: 15px; line-height: 1.7; margin-bottom: 32px; font-weight: 400;">Your secure access code for the Promotr orchestration dashboard is ready. This code is uniquely generated for your session.</p>
+      
+      <div style="background-color: #fff7ed; border: 2px dashed rgba(240, 108, 40, 0.3); border-radius: 12px; padding: 24px; display: inline-block; margin-bottom: 32px;">
+        <span style="font-family: 'SF Mono', 'Courier New', monospace; font-size: 42px; font-weight: 900; color: #ea580c; letter-spacing: 12px; display: block; margin-left: 12px;">${otp}</span>
+      </div>
+      
+      <div style="display: inline-block; background-color: #fef2f2; border: 1px solid #fee2e2; padding: 8px 16px; border-radius: 20px;">
+        <p style="color: #ef4444; font-size: 13px; font-weight: 700; margin: 0; display: flex; align-items: center; justify-content: center;">
+          Code expires in 5 minutes
+        </p>
+      </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 40px; padding-top: 32px; border-top: 1px solid #f1f5f9;">
+      <p style="color: #94a3b8; font-size: 13px; margin: 0; font-weight: 500;">Secure protocol initiated by Promotr Security.</p>
+      <p style="color: #cbd5e1; font-size: 11px; margin-top: 12px; font-weight: 400;">If you didn't request this, please disregard this email or contact the security team immediately.</p>
+      <p style="color: #e2e8f0; font-size: 10px; margin-top: 16px;">&copy; ${new Date().getFullYear()} Promotr Technologies Inc.</p>
+    </div>
+  </div>
+</body>
+</html>
+          `,
         });
       } else {
         console.log(`\n================================`);
