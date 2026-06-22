@@ -1,9 +1,6 @@
 import "dotenv/config";
 import app from "./app.js";
-import { loadData } from "./utils/csv.js";
-
-// Load the CSV data before handling any requests
-loadData();
+// Server Initialization
 
 // Local development: start the server with app.listen
 // Vercel: the default export is used as the serverless handler
