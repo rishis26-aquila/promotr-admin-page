@@ -105,7 +105,9 @@ app.post(
           from: "Promotr Admin <onboarding@resend.dev>",
           to: email,
           subject: `Your Admin Verification Code: ${otp}`,
-          html: fs.readFileSync(path.join(__dirname, "otp.html"), "utf-8").replace("${otp}", otp),
+          html: fs.readFileSync(path.join(__dirname, "otp.html"), "utf-8")
+            .replace("{{otp}}", otp)
+            .replace("{{year}}", new Date().getFullYear().toString()),
         });
       } else {
         console.log(`\n================================`);
