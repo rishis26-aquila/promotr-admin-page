@@ -11,7 +11,11 @@ const Jobs = () => {
     const fetchJobs = async () => {
       try {
         const response = await api.getJobs()
-        setJobs(response.data)
+        if (response.success && response.data) {
+          setJobs(response.data)
+        } else {
+          console.error('Failed to load jobs:', response.message)
+        }
       } catch (error) {
         console.error('Error fetching jobs:', error)
       } finally {

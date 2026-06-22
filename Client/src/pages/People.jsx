@@ -39,7 +39,11 @@ const People = () => {
     const fetchUsers = async () => {
       try {
         const response = await api.getUsers()
-        setUsers(response.data)
+        if (response.success && response.data) {
+          setUsers(response.data)
+        } else {
+          console.error('Failed to load users:', response.message)
+        }
       } catch (error) {
         console.error('Error fetching users:', error)
       } finally {

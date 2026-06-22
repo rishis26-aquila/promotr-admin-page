@@ -18,8 +18,17 @@ const Dashboard = () => {
         console.log('Dashboard Data:', dashRes.data)
         console.log('Analytics Data:', analyticsRes.data)
 
-        setStats(dashRes.data)
-        setAnalytics(analyticsRes.data)
+        if (dashRes.success && dashRes.data) {
+          setStats(dashRes.data)
+        } else {
+          console.error('Failed to load dashboard stats:', dashRes.message)
+        }
+        
+        if (analyticsRes.success && analyticsRes.data) {
+          setAnalytics(analyticsRes.data)
+        } else {
+          console.error('Failed to load analytics:', analyticsRes.message)
+        }
       } catch (error) {
         console.error('Error fetching dashboard/analytics stats:', error)
       } finally {

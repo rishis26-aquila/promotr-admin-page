@@ -99,7 +99,30 @@ app.post(
           from: "Promotr Admin <onboarding@resend.dev>",
           to: email,
           subject: `Your Admin Verification Code: ${otp}`,
-          html: `<p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`,
+          html: `
+            <div style="font-family: 'Inter', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #f0f0f0; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
+              <div style="text-align: center; margin-bottom: 32px;">
+                <h1 style="color: #F06C28; font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px;">Promotr.</h1>
+                <p style="color: #64748b; font-size: 14px; font-weight: 500; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase;">Admin Gatekeeper</p>
+              </div>
+              
+              <div style="background-color: #fafafa; border-radius: 12px; padding: 32px; text-align: center; border: 1px solid #f1f5f9;">
+                <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Authentication Required</h2>
+                <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">Please use the following verification code to access the Promotr orchestration dashboard. This code is unique to you.</p>
+                
+                <div style="background-color: #ffffff; border: 2px dashed #F06C28; border-radius: 8px; padding: 20px; display: inline-block;">
+                  <span style="font-family: monospace; font-size: 36px; font-weight: 900; color: #F06C28; letter-spacing: 8px;">${otp}</span>
+                </div>
+                
+                <p style="color: #ef4444; font-size: 13px; font-weight: 600; margin-top: 24px; margin-bottom: 0;">⏱️ Expires in 5 minutes</p>
+              </div>
+              
+              <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #f1f5f9;">
+                <p style="color: #94a3b8; font-size: 12px; margin: 0;">If you didn't request this code, please ignore this email or contact security.</p>
+                <p style="color: #cbd5e1; font-size: 11px; margin-top: 8px;">&copy; ${new Date().getFullYear()} Promotr. High-security protocol active.</p>
+              </div>
+            </div>
+          `,
         });
       } else {
         console.log(`\n================================`);
