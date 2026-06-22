@@ -23,7 +23,12 @@ export function validateSchema(
     }
 
     // Replace req property with sanitized/validated data (strips unknown fields if schema is strict)
-    req[property] = result.data;
+    Object.defineProperty(req, property, {
+      value: result.data,
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
     next();
   };
 }
